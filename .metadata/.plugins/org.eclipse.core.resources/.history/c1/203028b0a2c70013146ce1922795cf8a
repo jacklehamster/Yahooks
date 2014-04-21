@@ -1,0 +1,23 @@
+package com.dobuki.yahooks
+{
+	import flash.display.MovieClip;
+
+	public interface IYahooks
+	{
+		function get username():String;
+		function connect(root:MovieClip,username:String=null,room:String=null,joinData:Object=null):void;
+		function disconnect():void;
+		function register(hook:Object,id:String,room:String=null):void;
+		function unregister(hook:Object):void;
+		function setLoop(hook:Object,callback:Function):void;
+		function setJoinCallback(hook:Object,callback:Function):void;
+		function setLeaveCallback(hook:Object,callback:Function):void;
+		function setRoom(hook:Object,room:String):void;
+		function joinRoom(room:String,joinData:Object=null):void;
+		function leaveRoom(room:String):void;
+		function listRooms(callback:Function):void;
+		function call(hook:Object,action:String,persist:Boolean,...params):void;
+		function submitScore(name:String,score:int):void;
+		function get frame():uint;
+	}
+}

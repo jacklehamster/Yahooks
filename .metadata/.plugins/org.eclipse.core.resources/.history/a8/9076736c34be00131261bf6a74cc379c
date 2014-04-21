@@ -1,0 +1,255 @@
+package paris24.turbox.grafix
+{
+	import by.blooddy.crypto.MD5;
+	
+	import flash.display.BitmapData;
+	import flash.display.IBitmapDrawable;
+	import flash.display.MovieClip;
+	import flash.display3D.Context3D;
+	import flash.display3D.Context3DTextureFormat;
+	import flash.display3D.textures.Texture;
+	import flash.geom.Matrix;
+	import flash.geom.Point;
+	import flash.geom.Rectangle;
+	import flash.utils.Dictionary;
+	
+	import paris24.turbox.display.AdvancedMovieClip;
+	import paris24.turbox.utils.Clock;
+
+	public class GrafixProcessor
+	{
+		static private const MAXTEXTURE:int = 2048;
+		static private const MIPMAPS:int  = 12;
+		static private const ALMOST1:Number = .99;
+		
+		private var _standardSize:int = 128;
+		private var dico:Dictionary = new Dictionary();
+		private var mipmaps:Vector.<BitmapData> = new Vector.<BitmapData>(MIPMAPS);
+		private var textures:Vector.<Texture>;
+		private var textureslots:int;
+		private var globalSpritex:Object = {};
+		
+		public function GrafixProcessor() {
+		}
+		
+		public function init(context3d:Context3D):void {
+			for(var i:int=0;i<mipmaps.length;i++) {
+				mipmaps[i] = new BitmapData(1<<(11-i),1<<(11-i),true,0);
+			}
+			textures = new <Texture>[ null ];
+			textureslots = 0;
+		}
+		
+		public function set standardSize(value:int):void {
+			_standardSize = value;
+		}
+		
+		private function getSpritex(smurf:MovieClip):Vector.<Spritex> {
+			var spritexes:Vector.<Spritex> = dico[Object(smurf).constructor];
+			if(!spritexes) {
+				dico[Object(smurf).constructor] = spritexes = new Vector.<Spritex>(smurf.totalFrames);
+			}
+			return spritexes;
+		}
+		
+		private function uploadMipmap(texture:Texture,mipmaps:Vector.<BitmapData>):void {
+			for(var i:int=0;i<mipmaps.length;i++) {
+				texture.uploadFromBitmapData(mipmaps[i],i);
+			}
+		}
+		
+		public function processGrafix(context3d:Context3D,pixarray:Vector.<IBitmapDrawable>,width:int,height:int):void {
+			var fswcoef:Number = 2/width;
+			var fshcoef:Number = -2/height;
+			var numSlotSide:int = MAXTEXTURE/_standardSize;
+			var jobTable:Object = {};
+			var jobs:Vector.<GrafixJob> = new Vector.<GrafixJob>();
+			var textureUploadPending:Boolean = false;
+			var tempBitmap:BitmapData = null;
+			
+			for(var i:int=0;i<pixarray.length;i++) {
+				var movieClip:MovieClip = pixarray[i] as MovieClip;
+				var spritexes:Vector.<Spritex> = getSpritex(movieClip);
+				var frameIndex:int= movieClip.currentFrame-1;
+				var spritex:Spritex = spritexes[frameIndex];
+				var xindex:int;
+				var yindex:int;
+				//Clock.clockin(1);
+				if(!spritex) {
+					//	first, draw bitmap into primaryBitmap to test MD5
+					var rect:Rectangle = movieClip.getBounds(movieClip);
+					var xscale:Number = _standardSize/rect.width*ALMOST1, 
+						yscale:Number = _standardSize/rect.height*ALMOST1;
+					xscale = yscale;
+					var matrix:Matrix = new Matrix();
+					matrix.a = xscale;
+					matrix.d = yscale;
+					matrix.tx = -rect.left*xscale;
+					matrix.ty = -rect.top*yscale;
+					if(!tempBitmap)
+						tempBitmap = new BitmapData(_standardSize,_standardSize,true,0);
+					tempBitmap.fillRect(tempBitmap.rect,0);
+					tempBitmap.draw(movieClip,matrix,null,null,null,true);
+					
+					//	check MD5 to see if this bitmap already exists
+					var md5:String = MD5.hashBytes(tempBitmap.getPixels(tempBitmap.rect));
+					if(globalSpritex[md5]) {
+						spritexes[frameIndex] = spritex = globalSpritex[md5];
+						xindex = spritex.textureSlot%numSlotSide;
+						yindex = (spritex.textureSlot-xindex)/numSlotSide;
+					}
+					else {
+						globalSpritex[md5] = spritexes[frameIndex] = spritex = new Spritex();
+						spritex.textureIndex = textures.length-1;
+						spritex.textureSlot = textureslots;
+						textureslots++;
+						if(textureslots==numSlotSide*numSlotSide) {
+							if(textureUploadPending) {
+								uploadMipmap(textures[textures.length-1],mipmaps);
+								textureUploadPending = false;
+							}
+							textureslots=0;
+							textures.push(null);
+						}
+						xindex = spritex.textureSlot%numSlotSide;
+						yindex = (spritex.textureSlot-xindex)/numSlotSide;
+						
+						spritex.dimensions = new <Point>[rect.topLeft,new Point(rect.right,rect.top),new Point(rect.left,rect.bottom),rect.bottomRight];
+						
+						mipmaps[0].copyPixels(tempBitmap,tempBitmap.rect,new Point(xindex*_standardSize,yindex*_standardSize));
+						for(var m:int=1;m<mipmaps.length;m++) {
+							var size:int = (_standardSize>>m);
+							xscale = size/rect.width*ALMOST1;
+							yscale = size/rect.height*ALMOST1;
+							xscale = yscale;
+							matrix.a = xscale;
+							matrix.d = yscale;
+							matrix.tx = -rect.left*xscale + xindex*size;
+							matrix.ty = -rect.top*yscale + yindex*size;
+							mipmaps[m].draw(movieClip,matrix,null,null,null,true);
+						}
+						textureUploadPending = true;
+					}
+				}
+				else {
+					xindex = spritex.textureSlot%numSlotSide;
+					yindex = (spritex.textureSlot-xindex)/numSlotSide;
+				}
+				//Clock.clockout(1);
+
+				//Clock.clockin(2);
+				if(!textures[textures.length-1]) {
+					textures[textures.length-1] = context3d.createTexture(MAXTEXTURE,MAXTEXTURE,Context3DTextureFormat.BGRA, false);
+				}
+				
+				var job:GrafixJob = jobTable[spritex.textureIndex];
+				if(!job) {
+					jobTable[spritex.textureIndex] = job = new GrafixJob();
+					job.texture = textures[spritex.textureIndex];
+					jobs.push(job);
+				}
+				//Clock.clockout(2);
+				
+				//Clock.clockin(4);
+				var coordinates:Vector.<Point> = null;
+				if(movieClip is AdvancedMovieClip) {
+					coordinates = (movieClip as AdvancedMovieClip).coordinates;
+				}
+				if(!coordinates) {
+					coordinates = new <Point> [
+						movieClip.localToGlobal(spritex.dimensions[0]),
+						movieClip.localToGlobal(spritex.dimensions[1]),
+						movieClip.localToGlobal(spritex.dimensions[2]),
+						movieClip.localToGlobal(spritex.dimensions[3])
+					];
+				}
+				
+				var topLeft:Point = coordinates[0];
+				var topRight:Point = coordinates[1];
+				var bottomLeft:Point = coordinates[2];
+				var bottomRight:Point = coordinates[3];
+				var z:Number = 1-(1+i)/(pixarray.length+1);
+				var xtex1:Number = xindex/numSlotSide;
+				var ytex1:Number = yindex/numSlotSide;
+				var xtex2:Number = (xindex+ALMOST1)/numSlotSide;
+				var ytex2:Number = (yindex+ALMOST1)/numSlotSide;
+				//Clock.clockout(4);
+				
+				//Clock.clockin(5.5);
+				var indexStart:uint = job.vertices.length/5;
+				job.indices.push(indexStart,indexStart+1,indexStart+2,indexStart,indexStart+3,indexStart+2);
+				//Clock.clockout(5.5);
+				//Clock.clockin(5.6);
+				job.vertices.push(
+					bottomLeft.x*fswcoef-1,
+					bottomLeft.y*fshcoef+1,
+					z,
+					xtex1,
+					ytex2,
+					
+					topLeft.x*fswcoef-1,
+					topLeft.y*fshcoef+1,
+					z,
+					xtex1,
+					ytex1,
+					
+					topRight.x*fswcoef-1,
+					topRight.y*fshcoef+1,
+					z,
+					xtex2,
+					ytex1,
+					
+					bottomRight.x*fswcoef-1,
+					bottomRight.y*fshcoef+1,
+					z,
+					xtex2,
+					ytex2);
+				//Clock.clockout(5.6);
+			}
+			
+			if(tempBitmap)
+				tempBitmap.dispose();
+			
+			//Clock.clockin(6);
+			if(textureUploadPending) {
+				uploadMipmap(textures[textures.length-1],mipmaps);
+				textureUploadPending = false;
+			}
+			//Clock.clockout(6);
+			//Clock.clockin(7);
+			for each(job in jobs) {
+				job.process(context3d);
+			}
+			//Clock.clockout(7);
+		}
+	}
+}
+import flash.display.BitmapData;
+import flash.display3D.Context3D;
+import flash.display3D.Context3DVertexBufferFormat;
+import flash.display3D.IndexBuffer3D;
+import flash.display3D.VertexBuffer3D;
+import flash.display3D.textures.Texture;
+import flash.geom.Point;
+import flash.geom.Rectangle;
+
+internal class GrafixJob
+{
+	public var vertices:Vector.<Number> = new Vector.<Number>();
+	public var indices:Vector.<uint> = new Vector.<uint>();
+	public var texture:Texture;
+	
+	public function process(context3d:Context3D):void {
+		var verticesBuffer:VertexBuffer3D = context3d.createVertexBuffer(vertices.length/5,5);
+		verticesBuffer.uploadFromVector(vertices,0,vertices.length/5);
+		var indicesBuffer:IndexBuffer3D = context3d.createIndexBuffer(indices.length);
+		indicesBuffer.uploadFromVector(indices,0,indices.length);
+		
+		context3d.setTextureAt(0, texture);	
+		context3d.setVertexBufferAt (0, verticesBuffer, 0, 	Context3DVertexBufferFormat.FLOAT_3);
+		context3d.setVertexBufferAt (1, verticesBuffer, 3, 	Context3DVertexBufferFormat.FLOAT_2);
+		context3d.drawTriangles(indicesBuffer);
+		verticesBuffer.dispose();
+		indicesBuffer.dispose();
+	}
+}

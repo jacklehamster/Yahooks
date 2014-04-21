@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<section name="Workbench">
+	<section name="ExportSigningOptions">
+		<list key="provisioning">
+			<item value="/Users/vlequang/Google Drive/cert/dobukiappstore.mobileprovision"/>
+			<item value=""/>
+			<item value="/Users/vlequang/Google Drive/cert/Dobuki_App_Store.mobileprovision"/>
+		</list>
+	</section>
+</section>

@@ -1,0 +1,3 @@
+#Wed Apr 09 09:30:56 PDT 2014
+eclipse.preferences.version=1
+com.perforce.team.core.p4java.P4_CONNECTIONS=P4PORT shuka\\c1940 P4CLIENT vinh-shuka P4USER vlequang P4CHARSET none SAVEPASS true OFFLINE false \:P4PORT theoden\\c1666 P4CLIENT vlequang P4USER vlequang P4CHARSET none SAVEPASS true OFFLINE false 

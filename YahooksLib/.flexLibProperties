@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<flexLibProperties includeAllClasses="true" useMultiPlatformConfig="false" version="3">
+  <includeClasses>
+    <classEntry path="com.dobuki.yahooks.Yahooks"/>
+    <classEntry path="com.dobuki.yahooks.IHook"/>
+    <classEntry path="com.dobuki.yahooks.HookInfo"/>
+    <classEntry path="com.dobuki.yahooks.IYahooks"/>
+    <classEntry path="com.dobuki.yahooks.LocalYahooks"/>
+    <classEntry path="com.dobuki.yahooks.BaseYahooks"/>
+    <classEntry path="com.dobuki.yahooks.Room"/>
+  </includeClasses>
+  <includeResources/>
+  <namespaceManifests/>
+</flexLibProperties>

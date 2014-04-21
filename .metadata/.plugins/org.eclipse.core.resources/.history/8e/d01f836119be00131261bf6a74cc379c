@@ -1,0 +1,15 @@
+package
+{
+	import com.dobuki.yahooks.Yahooks;
+	
+	import flash.display.MovieClip;
+	import flash.display.Sprite;
+	
+	public class Test extends MovieClip
+	{
+		public function Test()
+		{
+			Yahooks.instance.connect(this,"paris","paris",{});
+		}
+	}
+}

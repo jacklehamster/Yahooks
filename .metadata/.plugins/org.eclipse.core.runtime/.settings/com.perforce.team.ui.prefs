@@ -1,0 +1,5 @@
+#Fri Mar 28 16:57:13 PDT 2014
+com.perforce.team.ui.submitted.FILE_FOLDER_HISTORY=//depot/main/AdobeConnectMobile/tools/Adobe/Presenter/PresenterMobile-ConnectInterface/...\#\#\#//Releases/PresenterMobile-ConnectInterface/...\#\#\#
+com.perforce.team.ui.submittedcolumns=Changelist\=100\#\#\#Date\=160\#\#\#User\=100\#\#\#Workspace\=112\#\#\#Description\=962\#\#\#
+com.perforce.team.ui.historycolumns=Revision\=100\#\#\#File Name\=100\#\#\#Changelist\=100\#\#\#Date\=158\#\#\#User\=100\#\#\#Action\=100\#\#\#Description\=391\#\#\#
+eclipse.preferences.version=1

@@ -1,0 +1,129 @@
+package
+{
+	import flash.display.Bitmap;
+	import flash.display.Loader;
+	import flash.display.MovieClip;
+	import flash.display.Sprite;
+	import flash.events.Event;
+	import flash.events.MouseEvent;
+	import flash.filters.GlowFilter;
+	import flash.system.Capabilities;
+	import flash.system.LoaderContext;
+	import flash.text.TextField;
+	import flash.utils.ByteArray;
+	import flash.utils.getTimer;
+	import flash.utils.setInterval;
+	
+	import paris24.turbox.Turbox;
+	import paris24.turbox.utils.Clock;
+	
+	[SWF (width='800', height='450', backgroundColor='#000000', frameRate='24')]
+	public class TurboxTest extends Sprite
+	{
+		[Embed(source="smurfer.swf", mimeType="application/octet-stream")]
+		private var Smurfer:Class;
+		private static const NUM_SMURF:int = 1000;
+		private var array:Array = [];
+		
+		private var turbox:Turbox;
+		private var loader:Loader = new Loader();
+		
+		public function TurboxTest()
+		{
+			var tf:TextField= new TextField();
+			stage.addChild(tf);
+			tf.filters = [new GlowFilter(0xFFFFFF,1,10,10,10)];
+			tf.x = stage.stageWidth-tf.width;
+			tf.y = stage.stageHeight-tf.height;
+			tf.text = 'FPS';
+			var counter:int = 0;
+			var timer:int = getTimer();
+			addEventListener(Event.ENTER_FRAME,
+				function(e:Event):void {
+					counter++;
+					var now:int = getTimer();
+					if(now-timer>500) {
+						//tf.text = Capabilities.playerType;
+						tf.text = (turbox.active?"Turbox":"No-turbox")+" :"+ int(100*counter*1000/(now-timer))/100 + " fps";
+						timer = now;
+						counter = 0;
+					}
+				});
+			
+			stage.frameRate = 30;
+			
+			turbox = new Turbox(this);
+			turbox.standardSize = 128;
+			turbox.loadClassInfoXML(
+				<xml>
+					<classInfo>
+						<name>Smurf</name>
+						<atom>1</atom>
+					</classInfo>
+				</xml>);
+			stage.addEventListener(MouseEvent.MOUSE_DOWN,
+				function(e:MouseEvent):void {
+					turbox.active = !turbox.active;
+				});
+			
+			var context:LoaderContext = new LoaderContext();
+			context.allowCodeImport = true;
+			loader.contentLoaderInfo.addEventListener(Event.COMPLETE,onLoad);
+			loader.loadBytes(new Smurfer() as ByteArray,context);
+		}
+		
+		private function onLoad(e:Event):void {
+//			addChild(loader);
+			var SmurfClass:Class = loader.contentLoaderInfo.applicationDomain.getDefinition("Smurf") as Class;
+			loader.unloadAndStop();
+			loader = null;
+//			var loader:Loader = new Loader();
+//			loader.loadBytes(new Smurfer() as ByteArray);
+//			addChild(loader);
+
+//			Clock.clockin('start');
+			var sprite:Sprite = new Sprite();
+			for(var i:int=0;i<NUM_SMURF;i++) {
+				var smurf:MovieClip = new SmurfClass();
+				sprite.addChild(smurf);
+				smurf.x = stage.stageWidth *Math.random();
+				smurf.yline = smurf.y = -50+stage.stageHeight*Math.random()*Math.random()*Math.random();//*Math.random();
+				smurf.gotoAndPlay(int(Math.random()*smurf.totalFrames)+1);
+				adjustScale(smurf);
+				smurf.visible = false;
+				//				smurf.scaleX = smurf.scaleY= Math.sqrt(smurf.y);///1000;//(Math.random()+.5)/5;
+				smurf.addEventListener(Event.ENTER_FRAME,advance);
+				array.push(smurf);
+			}
+			addChild(sprite);
+			array.sortOn("y",Array.NUMERIC);
+			for(i=0;i<array.length;i++)
+			{
+				sprite.setChildIndex(array[i] as MovieClip,i);
+			}
+//			Clock.clockout('start');
+		}
+		
+		private function adjustScale(sprite:MovieClip):void {
+			sprite.scaleX = sprite.scaleY= Math.pow(sprite.yline,.6)/100;///1000;//(Math.random()+.5)/5;
+		}
+		
+		private function advance(e:Event):void {
+			//clockin();
+			var sprite:MovieClip = e.currentTarget as MovieClip;
+			if(sprite.currentFrame>=4 && sprite.currentFrame<=12 || sprite.currentFrame>15) {
+				sprite.x +=20*sprite.scaleX;
+//				sprite.y += (Math.random()-.5)*5;
+				adjustScale(sprite);
+				var presprite:Number = sprite.y;
+				sprite.y = sprite.yline + sprite.scaleY * (Math.cos((sprite.x+sprite.yline)/50)*200)+100;
+//				sprite.rotation = sprite.y-presprite>(10*sprite.scaleY)?-20:presprite-sprite.y>(10*sprite.scaleY)?20:0;
+				sprite.visible = sprite.y>0;
+//				sprite.rotation += (Math.random()-.5)*5;
+				if(sprite.x>stage.stageWidth)
+					sprite.x = -sprite.width;
+			}
+			//clockout();3.5
+		}
+	}
+}

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<section name="Workbench">
+	<item value="804" key="ExportRemoteFolderDialog.location.x"/>
+	<item value="554" key="passwordStores.size.y"/>
+	<item value="260" key="ExportRemoteFolderDialog.location.y"/>
+	<item value="546" key="passwordStores.size.x"/>
+	<item value="238" key="ExportRemoteFolderDialog.size.y"/>
+	<item value="415" key="BranchTag.size.y"/>
+	<item value="22" key="passwordStores.location.y"/>
+	<item value="659" key="passwordStores.location.x"/>
+	<item value="388" key="ExportRemoteFolderDialog.size.x"/>
+	<item value="553" key="BranchTag.size.x"/>
+	<item value="142" key="BranchTag.location.y"/>
+	<item value="722" key="BranchTag.location.x"/>
+	<section name="NewLocationWizard">
+		<list key="ConfigurationWizardMainPage.STORE_URL_ID">
+			<item value="svn://svn.code.sf.net/p/flashlight-vnc/code/"/>
+			<item value="svn://svn.code.sf.net/p/flashlight-vnc/code/ flashlight-vnc-code"/>
+			<item value="http://svn.code.sf.net/p/flashlight-vnc/code/"/>
+			<item value="http://svn.code.sf.net/p/flashlight-vnc/code/ flashlight-vnc-code"/>
+		</list>
+	</section>
+</section>
